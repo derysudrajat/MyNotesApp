@@ -7,18 +7,17 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import com.example.mynotesapp.DatabaseHelper;
 import com.example.mynotesapp.Note;
 
 import java.util.ArrayList;
-import static com.example.mynotesapp.db.DatabaseContract.*;
 import static com.example.mynotesapp.db.DatabaseContract.NoteColumns.*;
 
 
 public class NoteHelper {
-    private static final String DATABASE_TABLE = TABLE_NOTE;
+    private static final String DATABASE_TABLE = TABLE_NAME;
     private static DatabaseHelper dataBaseHelper;
     private static NoteHelper INSTANCE;
+
     private static SQLiteDatabase database;
 
     private NoteHelper(Context context) {
@@ -39,11 +38,20 @@ public class NoteHelper {
     public void open() throws SQLException {
         database = dataBaseHelper.getWritableDatabase();
     }
+
     public void close() {
         dataBaseHelper.close();
+
         if (database.isOpen())
             database.close();
     }
+
+    /**
+     * Gunakan method ini untuk ambil semua note yang ada
+     * Otomatis di parsing ke dalam model Note
+     *
+     * @return hasil getAllNotes berbentuk array model note
+     */
     public ArrayList<Note> getAllNotes() {
         ArrayList<Note> arrayList = new ArrayList<>();
         Cursor cursor = database.query(DATABASE_TABLE, null,
@@ -62,14 +70,22 @@ public class NoteHelper {
                 note.setTitle(cursor.getString(cursor.getColumnIndexOrThrow(TITLE)));
                 note.setDescription(cursor.getString(cursor.getColumnIndexOrThrow(DESCRIPTION)));
                 note.setDate(cursor.getString(cursor.getColumnIndexOrThrow(DATE)));
+
                 arrayList.add(note);
                 cursor.moveToNext();
+
             } while (!cursor.isAfterLast());
         }
         cursor.close();
         return arrayList;
     }
 
+    /**
+     * Gunakan method ini untuk getAllNotes insertNote
+     *
+     * @param note model note yang akan dimasukkan
+     * @return id dari data yang baru saja dimasukkan
+     */
     public long insertNote(Note note) {
         ContentValues args = new ContentValues();
         args.put(TITLE, note.getTitle());
@@ -78,6 +94,12 @@ public class NoteHelper {
         return database.insert(DATABASE_TABLE, null, args);
     }
 
+    /**
+     * Gunakan method ini untuk getAllNotes updateNote
+     *
+     * @param note model note yang akan diubah
+     * @return int jumlah dari row yang ter-updateNote, jika tidak ada yang diupdate maka nilainya 0
+     */
     public int updateNote(Note note) {
         ContentValues args = new ContentValues();
         args.put(TITLE, note.getTitle());
@@ -86,7 +108,13 @@ public class NoteHelper {
         return database.update(DATABASE_TABLE, args, _ID + "= '" + note.getId() + "'", null);
     }
 
+    /**
+     * Gunakan method ini untuk getAllNotes deleteNote
+     *
+     * @param id id yang akan di deleteNote
+     * @return int jumlah row yang di deleteNote
+     */
     public int deleteNote(int id) {
-        return database.delete(TABLE_NOTE, _ID + " = '" + id + "'", null);
+        return database.delete(TABLE_NAME, _ID + " = '" + id + "'", null);
     }
 }
