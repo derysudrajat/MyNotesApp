@@ -20,31 +20,38 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-public class NoteAddUpdateActivity extends AppCompatActivity implements View.OnClickListener{
-
+public class NoteAddUpdateActivity extends AppCompatActivity
+        implements View.OnClickListener {
     private EditText edtTitle, edtDescription;
     private Button btnSubmit;
+
     public static final String EXTRA_NOTE = "extra_note";
     public static final String EXTRA_POSITION = "extra_position";
+
     private boolean isEdit = false;
     public static final int REQUEST_ADD = 100;
     public static final int RESULT_ADD = 101;
     public static final int REQUEST_UPDATE = 200;
     public static final int RESULT_UPDATE = 201;
     public static final int RESULT_DELETE = 301;
+
     private Note note;
     private int position;
+
     private NoteHelper noteHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_note_add_update);
+
         edtTitle = findViewById(R.id.edt_title);
         edtDescription = findViewById(R.id.edt_description);
         btnSubmit = findViewById(R.id.btn_submit);
         btnSubmit.setOnClickListener(this);
+
         noteHelper = NoteHelper.getInstance(getApplicationContext());
+
         note = getIntent().getParcelableExtra(EXTRA_NOTE);
         if (note != null) {
             position = getIntent().getIntExtra(EXTRA_POSITION, 0);
@@ -52,11 +59,14 @@ public class NoteAddUpdateActivity extends AppCompatActivity implements View.OnC
         } else {
             note = new Note();
         }
+
         String actionBarTitle;
         String btnTitle;
+
         if (isEdit) {
             actionBarTitle = "Ubah";
             btnTitle = "Update";
+
             if (note != null) {
                 edtTitle.setText(note.getTitle());
                 edtDescription.setText(note.getDescription());
@@ -65,27 +75,45 @@ public class NoteAddUpdateActivity extends AppCompatActivity implements View.OnC
             actionBarTitle = "Tambah";
             btnTitle = "Simpan";
         }
+
         if (getSupportActionBar() != null) {
             getSupportActionBar().setTitle(actionBarTitle);
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
+
         btnSubmit.setText(btnTitle);
     }
 
+
     @Override
-    public void onClick(View v) {
-        if (v.getId() == R.id.btn_submit) {
+    protected void onDestroy() {
+        super.onDestroy();
+    }
+
+    @Override
+    public void onClick(View view) {
+        if (view.getId() == R.id.btn_submit) {
             String title = edtTitle.getText().toString().trim();
             String description = edtDescription.getText().toString().trim();
+
+            /*
+            Jika fieldnya masih kosong maka tampilkan error
+             */
             if (TextUtils.isEmpty(title)) {
                 edtTitle.setError("Field can not be blank");
                 return;
             }
+
             note.setTitle(title);
             note.setDescription(description);
+
             Intent intent = new Intent();
             intent.putExtra(EXTRA_NOTE, note);
             intent.putExtra(EXTRA_POSITION, position);
+
+            /*
+            Jika merupakan edit maka setresultnya UPDATE, dan jika bukan maka setresultnya ADD
+            */
             if (isEdit) {
                 long result = noteHelper.updateNote(note);
                 if (result > 0) {
@@ -97,6 +125,7 @@ public class NoteAddUpdateActivity extends AppCompatActivity implements View.OnC
             } else {
                 note.setDate(getCurrentDate());
                 long result = noteHelper.insertNote(note);
+
                 if (result > 0) {
                     note.setId((int) result);
                     setResult(RESULT_ADD, intent);
@@ -132,13 +161,20 @@ public class NoteAddUpdateActivity extends AppCompatActivity implements View.OnC
     @Override
     public void onBackPressed() {
         showAlertDialog(ALERT_DIALOG_CLOSE);
-        super.onBackPressed();
     }
+
     private final int ALERT_DIALOG_CLOSE = 10;
     private final int ALERT_DIALOG_DELETE = 20;
+
+    /*
+    Konfirmasi dialog sebelum proses batal atau hapus
+    close = 10
+    deleteNote = 20
+     */
     private void showAlertDialog(int type) {
         final boolean isDialogClose = type == ALERT_DIALOG_CLOSE;
         String dialogTitle, dialogMessage;
+
         if (isDialogClose) {
             dialogTitle = "Batal";
             dialogMessage = "Apakah anda ingin membatalkan perubahan pada form?";
@@ -146,7 +182,9 @@ public class NoteAddUpdateActivity extends AppCompatActivity implements View.OnC
             dialogMessage = "Apakah anda yakin ingin menghapus item ini?";
             dialogTitle = "Hapus Note";
         }
+
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+
         alertDialogBuilder.setTitle(dialogTitle);
         alertDialogBuilder
                 .setMessage(dialogMessage)
@@ -175,10 +213,14 @@ public class NoteAddUpdateActivity extends AppCompatActivity implements View.OnC
                 });
         AlertDialog alertDialog = alertDialogBuilder.create();
         alertDialog.show();
+
     }
+
     private String getCurrentDate() {
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.getDefault());
         Date date = new Date();
+
         return dateFormat.format(date);
     }
 }
+
