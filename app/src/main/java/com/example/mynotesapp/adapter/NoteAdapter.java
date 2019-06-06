@@ -3,6 +3,7 @@ package com.example.mynotesapp.adapter;
 import android.app.Activity;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
@@ -17,7 +18,9 @@ import com.example.mynotesapp.R;
 
 import java.util.ArrayList;
 
-public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteViewHolder> {
+import static com.example.mynotesapp.db.DatabaseContract.NoteColumns.CONTENT_URI;
+
+public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteViewholder> {
     private final ArrayList<Note> listNotes = new ArrayList<>();
     private final Activity activity;
 
@@ -30,47 +33,31 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteViewHolder
     }
 
     public void setListNotes(ArrayList<Note> listNotes) {
-
-        if (listNotes.size() > 0) {
-            this.listNotes.clear();
-        }
+        this.listNotes.clear();
         this.listNotes.addAll(listNotes);
-
         notifyDataSetChanged();
-    }
-
-    public void addItem(Note note) {
-        this.listNotes.add(note);
-        notifyItemInserted(listNotes.size() - 1);
-    }
-
-    public void updateItem(int position, Note note) {
-        this.listNotes.set(position, note);
-        notifyItemChanged(position, note);
-    }
-
-    public void removeItem(int position) {
-        this.listNotes.remove(position);
-        notifyItemRemoved(position);
-        notifyItemRangeChanged(position, listNotes.size());
     }
 
     @NonNull
     @Override
-    public NoteViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public NoteViewholder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_note, parent, false);
-        return new NoteViewHolder(view);
+        return new NoteViewholder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull NoteViewHolder holder, int position) {
-        holder.tvTitle.setText(listNotes.get(position).getTitle());
-        holder.tvDate.setText(listNotes.get(position).getDate());
-        holder.tvDescription.setText(listNotes.get(position).getDescription());
+    public void onBindViewHolder(@NonNull NoteViewholder holder, int position) {
+        holder.tvTitle.setText(getListNotes().get(position).getTitle());
+        holder.tvDate.setText(getListNotes().get(position).getDate());
+        holder.tvDescription.setText(getListNotes().get(position).getDescription());
         holder.cvNote.setOnClickListener(new CustomOnItemClickListener(position, new CustomOnItemClickListener.OnItemClickCallback() {
             @Override
             public void onItemClicked(View view, int position) {
                 Intent intent = new Intent(activity, NoteAddUpdateActivity.class);
+                // Set intent dengan data uri row note by id
+                // content://com.dicoding.picodiploma.mynotesapp/note/id
+                Uri uri = Uri.parse(CONTENT_URI + "/" + getListNotes().get(position).getId());
+                intent.setData(uri);
                 intent.putExtra(NoteAddUpdateActivity.EXTRA_POSITION, position);
                 intent.putExtra(NoteAddUpdateActivity.EXTRA_NOTE, listNotes.get(position));
                 activity.startActivityForResult(intent, NoteAddUpdateActivity.REQUEST_UPDATE);
@@ -83,16 +70,16 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteViewHolder
         return listNotes.size();
     }
 
-    class NoteViewHolder extends RecyclerView.ViewHolder {
+    class NoteViewholder extends RecyclerView.ViewHolder {
         final TextView tvTitle, tvDescription, tvDate;
         final CardView cvNote;
 
-        NoteViewHolder(View itemView) {
+        NoteViewholder(View itemView) {
             super(itemView);
             tvTitle = itemView.findViewById(R.id.tv_item_title);
             tvDescription = itemView.findViewById(R.id.tv_item_description);
             tvDate = itemView.findViewById(R.id.tv_item_date);
-            cvNote = itemView.findViewById(R.id.cv_item_note);
+            cvNote =  itemView.findViewById(R.id.cv_item_note);
         }
     }
 }
